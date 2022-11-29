@@ -1,2 +1,2 @@
-# Semantic-guided Image Virtual Attribute Learning for Noisy Multi label Chest X-ray Classification
-Official code for "Semantic-guided Image Virtual Attribute Learning for Noisy Multi-label Chest X-ray Classification"
+# BoMD: Bag of Multi-label Descriptors for Noisy Chest X-ray Classification
+Official code for "BoMD: Bag of Multi-label Descriptors for Noisy Chest X-ray Classification"
