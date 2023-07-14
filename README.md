@@ -2,7 +2,7 @@
 Official code for "BoMD: Bag of Multi-label Descriptors for Noisy Chest X-ray Classification"
 
 
-> [**BoMD: Bag of Multi-label Descriptors for Noisy Chest X-ray Classification**],
+> [**BoMD: Bag of Multi-label Descriptors for Noisy Chest X-ray Classification**],<br />
 > [Yuanhong Chen*](https://scholar.google.com/citations?user=PiWKAx0AAAAJ&hl=en&oi=ao), [Fengbei Liu*](https://fbladl.github.io/) [Hu Wang](https://huwang01.github.io/) [Chong Wang](https://scholar.google.com/citations?user=IWcTej4AAAAJ&hl=en&oi=ao) [Yu Tian](https://yutianyt.com/), [Yuyuan Liu](https://scholar.google.com/citations?user=SibDXFQAAAAJ&hl=zh-CN), [Gustavo Carneiro](https://www.surrey.ac.uk/people/gustavo-carneiro).            
 > *ICCV 2023 ([arXiv 2203.01937](https://arxiv.org/abs/2203.01937))*
 
