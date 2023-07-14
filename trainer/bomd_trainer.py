@@ -14,7 +14,7 @@ from trainer.base_cls_trainer import BASE_CLS
 from trainer.val_trainer import VAL
 from numpy import linalg as LA
 from utils.helper_functions import get_knns, calc_F1
-from models.model import model_zs_sdl
+from models.model import model_mid
 from loss.val_loss import VAL_LOSS
 import faiss
 from utils.utils import load_word_vec
@@ -68,7 +68,7 @@ class A2S:
         # self.train_loader = train_loader
         self.static_train_loader = static_train_loader
         self.wordvec_array = wordvec_array
-        self.model = model_zs_sdl(self.args)
+        self.model = model_mid(self.args)
         self.org_gt = self.static_train_loader.dataset.train_label
         self.train_size = self.org_gt.shape[0]
         self.relabel_methods = f"relabel_v{args.relabel_method}"

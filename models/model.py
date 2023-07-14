@@ -46,7 +46,7 @@ class CosineLoss(nn.Module):
         return loss
 
 
-class model_zs_sdl(nn.Module):
+class model_mid(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.backbone = densenet121(pretrained=True)

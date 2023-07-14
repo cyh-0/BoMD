@@ -17,7 +17,7 @@ from data.cxp_dataloader_cut import construct_cxp_cut
 from loguru import logger
 import wandb
 from utils.utils import sanity_check, color
-from trainer.sgval_trainer import SGVAL
+from trainer.bomd_trainer import SGVAL
 from utils.helper_functions import set_random_seeds
 
 

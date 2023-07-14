@@ -17,8 +17,3 @@ python main_bomd.py \
 --relabel_method 3 \
 --run_note "" \
 --wandb_mode "online"
-
-# --run_name "SGVAL-bluebert" \
-# --add_noise True \
-# --noise_ratio 0.4 \
-# --noise_p 0.2 \

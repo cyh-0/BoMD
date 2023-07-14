@@ -18,7 +18,7 @@ from data.cx14_pdc_dataloader_cut import construct_cx14_pdc_cut
 from loguru import logger
 import wandb
 from utils.utils import *
-from trainer.sgval_trainer import SGVAL
+from trainer.bomd_trainer import SGVAL
 
 BRED = color.BOLD + color.RED
 
@@ -92,7 +92,7 @@ def main():
     sgval_runner = SGVAL(args, train_loader_val, static_train_loader, train_loader_cls)
     # sgval_runner.deploy()
 
-    # Start from relabel 
+    # Start from relabel
     sgval_runner.a2s_runner.run()
     sgval_runner.cls_runner.train_loader.dataset.knn = np.load(
         os.path.join(wandb.run.dir, "knn.npy")

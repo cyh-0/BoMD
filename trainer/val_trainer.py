@@ -23,7 +23,7 @@ import copy
 from models.npc_model import PD_NPC
 import time
 from trainer.base_trainer import BASE_TRAINER
-from models.model import model_zs_sdl
+from models.model import model_mid
 from loss.val_loss import VAL_LOSS
 from utils.helper_functions import get_knns, calc_F1
 from data.cxp_dataloader_cut import construct_cxp_cut
@@ -40,7 +40,7 @@ class VAL:
         self.train_loader = train_loader
         self.wordvec_array = wordvec_array
 
-        self.model = model_zs_sdl(args).to(self.device)
+        self.model = model_mid(args).to(self.device)
         self.optim = torch.optim.Adam(
             self.model.parameters(), lr=args.lr_pd, weight_decay=0
         )

@@ -26,14 +26,14 @@ from utils.utils import *
 
 # from loss.SD_Loss import VAL_LOSS
 from loss.val_loss import VAL_LOSS
-from models.model import model_zs_sdl
+from models.model import model_mid
 from biobert import BERTEmbedModel
 from numpy import linalg as LA
 from utils.helper_functions import get_knns, calc_F1
 from torch.utils.data import Dataset, DataLoader
 import copy
 from relabel.sample_graph_maker import relabel_from_sample_graph
-from trainer.sgval_trainer import SGVAL
+from trainer.bomd_trainer import SGVAL
 
 BRED = color.BOLD + color.RED
 
