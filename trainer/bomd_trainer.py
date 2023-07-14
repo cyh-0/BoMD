@@ -76,16 +76,10 @@ class A2S:
         logger.bind(stage="A2S").warning(f"Using method v{args.relabel_method}")
 
         if self.args.load_val_features:
-            # fp = "run-20220124_140318-24mckzen"
             fp = self.args.pd_ckpt
             logger.bind(stage="A2S").warning("LOADING PD CKPT")
-            # pred_idxs = np.load("./relabel/run-20220124_140318-24mckzen_pred_rank.npy")
-            # va_matrix = np.load("./relabel/run-20220124_140318-24mckzen_matrix.npy")
             self.pred_idxs = np.load(f"./wandb/{fp}/files/pred_rank.npy")
             self.va_matrix = np.load(f"./wandb/{fp}/files/va_matrix.npy")
-            # self.pred_idxs = self.pred_idxs[-14714:]
-            # self.va_matrix = self.va_matrix[-14714:]
-
         if self.args.load_sample_graph:
             logger.bind(stage="A2S").warning("LOADING SAMPLE GRAPH")
             fp = self.args.pd_ckpt
@@ -122,7 +116,7 @@ class A2S:
         self,
     ):
         # train_loader = construct_cx14(args, args.root_dir, mode="god", file_name="train")
-        sd_criteria = VAL_LOSS(
+        mid_criteria = VAL_LOSS(
             wordvec_array=self.wordvec_array, weight=0.3, args=self.args
         ).to(self.device)
         total_loss = 0.0
@@ -144,7 +138,7 @@ class A2S:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                 outputs = self.model(inputs)
-                loss = sd_criteria(outputs, labels)
+                loss = mid_criteria(outputs, labels)
                 total_loss += loss.item()
 
                 preds_regular.append(outputs.unsqueeze(1).cpu().detach())
@@ -259,68 +253,8 @@ class A2S:
 
         new_gt = np.stack(total_new_label)
         np.save(os.path.join(wandb.run.dir, "knn.npy"), new_gt)
-        # np.save(os.path.join(wandb.run.dir, "relabelled_gt.npy"), new_gt)
-        # np.save(os.path.join("./wandb/run-20220804_022002-1e2g3ooa/files", "relabelled_gt_v2.npy"), new_gt)
         return new_gt
-
-    # Purely label aggregation
-    def relabel_v1(self, sample_idx):
-        row_new_label = None
-        if sample_idx in self.CLEAN_LIST:
-            row_new_label = self.org_gt[sample_idx].copy()
-
-        else:
-            topk_mat = np.stack(
-                [self.org_gt[sp_idx] for sp_idx in self.sample_graph[sample_idx]]
-            )
-            # Top 1 is no finding, assign no finding
-            if topk_mat[0][-1] == 1.0 and np.sum(topk_mat, axis=0)[-1] >= 8:
-                row_new_label = np.zeros((self.num_classes,))
-                row_new_label[-1] = 1
-                # print("activation no finding")
-            else:
-                sum_topk = np.sum(topk_mat, axis=0)
-                sum_topk[-1] = 0
-                sum_topk[sum_topk > 0.0] = 1
-                # if sum_topk.sum() == 0.0:
-                #     sum_topk[-1] = 1
-                row_new_label = self.org_gt[sample_idx] * self.args.lam + sum_topk * (
-                    1 - self.args.lam
-                )
-        return row_new_label
-
-    # Try to filter out low evidenced samples
-    def relabel_v2(self, sample_idx):
-        row_new_label = None
-        if sample_idx in self.CLEAN_LIST:
-            row_new_label = self.org_gt[sample_idx].copy()
-        else:
-            topk_mat = np.stack(
-                [self.org_gt[sp_idx] for sp_idx in self.sample_graph[sample_idx]]
-            )
-            # Top 1 is no finding, assign no finding
-            # if topk_mat[0][-1] == 1.0 and np.sum(topk_mat, axis=0)[-1] >= 4:
-            #     row_new_label = np.zeros((self.num_classes,))
-            #     row_new_label[-1] = 0
-            #     # print("activation no finding")
-            # else:
-            sum_topk = np.sum(topk_mat, axis=0)
-            if np.argmax(sum_topk) == 13:
-                row_new_label = np.zeros((self.num_classes,))
-                row_new_label[-1] = 1
-                return row_new_label
-            else:
-                sum_topk[-1] = 0
-                sum_topk[sum_topk < self.args.a2s_drop_th] = 0
-                sum_topk[sum_topk != 0.0] = 1
-                if sum_topk.sum() == 0.0:
-                    sum_topk[-1] = 1
-                    return sum_topk
-                row_new_label = self.org_gt[sample_idx] * self.args.lam + sum_topk * (
-                    1 - self.args.lam
-                )
-        return row_new_label
-
+    
     def relabel_v3(self, sample_idx):
         row_new_label = None
         if sample_idx in self.CLEAN_LIST:
@@ -330,27 +264,4 @@ class A2S:
                 [self.org_gt[sp_idx] for sp_idx in self.sample_graph[sample_idx]]
             )
             row_new_label = np.sum(topk_mat, axis=0)
-            # return
-            # # Top 1 is no finding, assign no finding
-            # if topk_mat[0][-1] == 1.0 and np.sum(topk_mat, axis=0)[-1] >= 8:
-            #     row_new_label = np.zeros((self.num_classes,))
-            #     row_new_label[-1] = 1
-            #     # print("activation no finding")
-            # else:
-            #     sum_topk = np.sum(topk_mat, axis=0)
-            #     sum_topk[-1] = 0
-            #     sum_topk[sum_topk < self.args.a2s_drop_th] = 0
-            #     sum_topk[sum_topk != 0.0] = 1
-            #     if sum_topk.sum() == 0.0:
-            #         sum_topk[-1] = 1
-            #         return sum_topk
-            #     row_new_label = self.org_gt[sample_idx] * self.args.lam + sum_topk * (
-            #         1 - self.args.lam
-            #     )
-            #     # one_array = np.ones((self.args.num_classes,))
-            #     # row_new_label = (
-            #     #     self.org_gt[sample_idx] * (1 - self.args.lam)
-            #     #     + (self.args.lam / 2) * one_array
-            #     #     + np.abs(self.args.lam) * sum_topk
-            #     # )
         return row_new_label

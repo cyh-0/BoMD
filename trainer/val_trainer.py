@@ -51,7 +51,7 @@ class VAL:
             epochs=args.epochs_val,
             pct_start=0.1,
         )
-        self.sd_criteria = VAL_LOSS(
+        self.mid_criteria = VAL_LOSS(
             wordvec_array=wordvec_array, weight=0.3, args=args
         ).to(self.device)
 
@@ -81,7 +81,7 @@ class VAL:
 
                 with torch.cuda.amp.autocast(enabled=True):
                     outputs = self.model(inputs)
-                    loss = self.sd_criteria(outputs, labels)
+                    loss = self.mid_criteria(outputs, labels)
                 total_loss += loss.item()
                 self.scaler.scale(loss).backward()
                 self.scaler.step(self.optim)
@@ -135,7 +135,7 @@ class VAL:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                 outputs = self.model(inputs)
-                loss = self.sd_criteria(outputs, labels)
+                loss = self.mid_criteria(outputs, labels)
                 total_loss += loss.item()
 
                 preds_regular.append(outputs.cpu().detach())
