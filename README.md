@@ -13,7 +13,8 @@ Code and name of the sub-module will be re-orgnized soon. Follow lines are the b
 * A2S -> Graph-based Relabelling
 * CLS -> Classifier Training
 
-
+## Datasets
+Download the processed [OpenI & PadChest](https://drive.google.com/drive/folders/1tSNMHxhs98AFctTOur9MTMLhYfiKEJ_-?usp=sharing)
 
 
 
