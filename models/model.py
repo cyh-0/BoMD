@@ -51,23 +51,8 @@ class model_mid(nn.Module):
         super().__init__()
         self.backbone = densenet121(pretrained=True)
         self.backbone.classifier = nn.Linear(1024, args.num_classes)
-
-        if args.train_data == "NIH":
-            if args.trim_data:
-                self.backbone.load_state_dict(
-                    torch.load("./ckpt/1e25dlaj_model_cls_19.pth")["net"]
-                )
-            else:
-                self.backbone.load_state_dict(
-                    torch.load("./ckpt/Baseline-MLSM.pth")["net"]
-                )
-
-        # self.drop = nn.Dropout(p=0.2)
         self.backbone.classifier = nn.Identity()
         self.fm_ln = nn.Linear(1024, args.embed_len * args.num_pd)
-        # self.wv_ln = nn.Linear(1024, 128)
-        # self.emb_loss = CosineLoss()
-        # self.num_pd = args.num_pd
 
     def forward(self, x):
         # fea -> [B, 1024, 16, 16]
