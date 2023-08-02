@@ -6,37 +6,6 @@ from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 from utils.helper_functions import sim_score
 
-
-class model_disentangle(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.model1 = densenet121(pretrained=True)
-
-        # self.model1.classifier = nn.Linear(1024, 15)
-        # self.model1.classifier = nn.Identity
-
-        self.ln = nn.Linear(256, 15)
-        # self.bn = nn.BatchNorm2d(1024)
-        self.drop = nn.Dropout(p=0.5)
-        self.relu = nn.ReLU()
-        self.cls = nn.Linear(1024, 1)
-
-    def forward(self, x):
-        # fea -> [B, 1024, 16, 16]
-        x = self.model1(x)
-        x = rearrange(x, "b c h w -> b c (h w)")
-        x = self.ln(x)
-        x = rearrange(x, "b z c-> b c z")
-
-        x = self.relu(x)
-        x = self.drop(x)
-        out = self.cls(x)
-        return out.squeeze()
-
-
-import os, wandb
-
-
 class CosineLoss(nn.Module):
     def forward(self, t_emb, v_emb):
         a_norm = v_emb / v_emb.norm(dim=1)[:, None]
@@ -44,8 +13,6 @@ class CosineLoss(nn.Module):
         loss = 1 - torch.mean(torch.diagonal(torch.mm(a_norm, b_norm.t()), 0))
 
         return loss
-
-
 class model_mid(nn.Module):
     def __init__(self, args):
         super().__init__()
