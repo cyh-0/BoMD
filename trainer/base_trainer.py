@@ -27,7 +27,6 @@ from glob import glob
 from utils.utils import log_csv
 from torch.utils.data import Dataset, DataLoader
 import copy
-from models.npc_model import PD_NPC
 import time
 
 

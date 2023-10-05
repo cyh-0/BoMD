@@ -25,7 +25,6 @@ from glob import glob
 from utils.utils import *
 from torch.utils.data import Dataset, DataLoader
 import copy
-from models.npc_model import PD_NPC
 import time
 from trainer.base_trainer import BASE_TRAINER
 import torch.nn.functional as F
