@@ -78,7 +78,7 @@ class BASE_CLS(BASE_TRAINER):
         self.pred_beta = 0.9
         self.start_epoch = 0
 
-        self.topk = args.a2s_topk
+        self.topk = args.nsd_topk
         logger.bind(stage="CONFIG").info(f"TOPK = {self.topk}")
         if args.resume:
             self._load_from_state_dict()
@@ -191,15 +191,10 @@ class BASE_CLS(BASE_TRAINER):
         return loss
 
     def loss_gls(self, p, y_tilde, y_knn, hist=0, L=2):
-        # y_bar = (
-        #     (1 - self.smooth_rate) * y_tilde
-        #     + self.smooth_rate * (self.b * (1 + hist) / L + (1 - self.b) * y_knn)
-        # ) * binarize_vec(y_knn + y_tilde)
-
-        # no_finding_idx = y_tilde[:,-1]==0
-        # loss_ce = self.cross_entropy(p[no_finding_idx], y_tilde[no_finding_idx])
-        # y_bar = ((1 - smooth_rate) * y_tilde + smooth_rate * (b * (1 + y_knn) / L + (1 - b) * y_knn))
-        y_bar = ((1 - self.smooth_rate) * y_tilde + self.smooth_rate * (y_knn)) * binarize_vec(y_knn + y_tilde)
+        gamma = self.b / 2
+        y_bar = (
+            (1 - self.smooth_rate) * y_tilde + self.smooth_rate * ( gamma * 1 + (1 - gamma) * y_knn)
+        ) * binarize_vec(y_knn + y_tilde)
         loss = self.criterion(p, y_bar)
         return loss
 

@@ -23,16 +23,15 @@ import copy
 import time
 from trainer.base_trainer import BASE_TRAINER
 from models.model import model_mid
-from loss.val_loss import VAL_LOSS
+from loss.mid_loss import MID_LOSS
 from utils.helper_functions import get_knns, calc_F1
 from data.cxp_dataloader_cut import construct_cxp_cut
 from data.cx14_dataloader_cut import construct_cx14_cut
 
 
-class VAL:
+class MID:
     def __init__(self, args, scaler, wordvec_array, train_loader) -> None:
         self.BEST_AUC = -np.inf
-
         self.args = args
         self.scaler = scaler
         self.device = args.device
@@ -41,21 +40,21 @@ class VAL:
 
         self.model = model_mid(args).to(self.device)
         self.optim = torch.optim.Adam(
-            self.model.parameters(), lr=args.lr_pd, weight_decay=0
+            self.model.parameters(), lr=args.lr_mid, weight_decay=0
         )
         self.scheduler = lr_scheduler.OneCycleLR(
             self.optim,
-            max_lr=args.lr_pd,
+            max_lr=args.lr_mid,
             steps_per_epoch=len(train_loader),
-            epochs=args.epochs_val,
+            epochs=args.epochs_mid,
             pct_start=0.1,
         )
-        self.mid_criteria = VAL_LOSS(
-            wordvec_array=wordvec_array, weight=0.3, args=args
+        self.mid_criteria = MID_LOSS(
+            beta=0.3, wordvec_array=wordvec_array, args=args
         ).to(self.device)
 
         self.test_loader_nih = construct_cx14_cut(
-            args, mode="test", file_name="test", stage="VAL"
+            args, mode="test", file_name="test", stage="MID"
         )
         self.test_loader_cxp = construct_cxp_cut(args, mode="test", file_name="test")
 
@@ -65,7 +64,7 @@ class VAL:
     ):
         self.model.train()
         # word_vecs = wordvec_array.squeeze().transpose(0, 1)
-        for epoch in range(self.args.epochs_val):
+        for epoch in range(self.args.epochs_mid):
             total_loss = 0.0
             tbar = tqdm(
                 self.train_loader,
@@ -147,7 +146,7 @@ class VAL:
         precision_3, recall_3, F1_3 = calc_F1(
             torch.cat(targets).numpy(),
             idxs,
-            self.args.num_pd,
+            self.args.num_fea,
             num_classes=len(word_vecs),
         )
         test_loss = total_loss / (batch_idx + 1)

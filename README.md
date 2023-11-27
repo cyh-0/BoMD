@@ -9,8 +9,8 @@ Official code for "BoMD: Bag of Multi-label Descriptors for Noisy Chest X-ray Cl
 ## News
 Code and name of the sub-module will be re-orgnized soon. Follow lines are the basic mapping of the name.
 * SGVAL -> BoMD model
-* VAL -> MID
-* A2S -> Graph-based Relabelling
+* MID -> MID
+* NSD -> Graph-based Relabelling
 * CLS -> Classifier Training
 
 ## Datasets

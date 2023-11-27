@@ -124,7 +124,7 @@ def construct_cxp_cut(args, mode, file_name=None, stage="CLS"):
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
 
-    if mode == "train" and stage == "VAL":
+    if mode == "train" and stage == "MID":
         transform = transforms.Compose(
             [
                 transforms.RandomResizedCrop(

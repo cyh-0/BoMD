@@ -2,17 +2,16 @@ import torch
 import torch.nn as nn
 
 
-class VAL_LOSS(nn.Module):
+class MID_LOSS(nn.Module):
     def __init__(self, beta=0.3, wordvec_array=None, args=None):
-        super(VAL_LOSS, self).__init__()
+        super(MID_LOSS, self).__init__()
         self.eps = 1e-7
         self.wordvec_array = wordvec_array
         self.embed_len = args.embed_len
         self.beta = beta
-        self.num_pd = args.num_pd
+        self.num_fea = args.num_fea
 
     def forward(self, x, y):
-
         batch_size = y.shape[0]
         loss = torch.zeros(batch_size).cuda()
         
@@ -41,7 +40,7 @@ class VAL_LOSS(nn.Module):
 
             num_pos = dot_prod_pos.shape[0]
             total_var = calc_diversity(self.wordvec_array, y[i])
-            if self.num_pd == 1:
+            if self.num_fea == 1:
                 loss[i] = torch.sum(torch.log(1 + torch.exp(v))) / (num_pos)
             else:
                 loss[i] = (

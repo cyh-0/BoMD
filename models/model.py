@@ -19,7 +19,7 @@ class model_mid(nn.Module):
         self.backbone = densenet121(pretrained=True)
         self.backbone.classifier = nn.Linear(1024, args.num_classes)
         self.backbone.classifier = nn.Identity()
-        self.fm_ln = nn.Linear(1024, args.embed_len * args.num_pd)
+        self.fm_ln = nn.Linear(1024, args.embed_len * args.num_fea)
 
     def forward(self, x):
         # fea -> [B, 1024, 16, 16]

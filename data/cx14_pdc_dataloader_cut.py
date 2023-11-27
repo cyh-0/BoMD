@@ -64,9 +64,9 @@ class Chest_PDC_Dataset(Dataset):
         self.train_img.extend(self.pdc_image_path)
         self.train_img = np.asarray(self.train_img)
 
-        if args.pd_ckpt:
+        if args.mid_ckpt:
             logger.bind(stage="DATALOADER").warning("LOADING NOISY LABEL")
-            self.pdc_label = np.load(f"./wandb/{args.pd_ckpt}/files/pdc_label.npy")
+            self.pdc_label = np.load(f"./ckpt/saved/{args.mid_ckpt}/files/pdc_label.npy")
 
         self.train_label = np.concatenate((self.nih_label, self.pdc_label), axis=0)
         self.train_size = self.train_img.shape[0]
@@ -117,7 +117,7 @@ class Chest_PDC_Dataset(Dataset):
         gt = self.train_label[index]
         img = Image.fromarray(io.imread(img_path)).convert("RGB")
         img_t = self.transform(img)
-        if self.mode != "train" or self.stage == "VAL":
+        if self.mode != "train" or self.stage == "MID":
             return img_t, gt, index
         else:
             return img_t, gt, index, self.knn[index]
@@ -160,7 +160,7 @@ def construct_cx14_pdc_cut(args, mode, file_name=None, stage="CLS"):
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
 
-    if mode == "train" and stage == "VAL":
+    if mode == "train" and stage == "MID":
         transform = transforms.Compose(
             [
                 transforms.RandomResizedCrop(

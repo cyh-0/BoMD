@@ -11,16 +11,16 @@ import wandb
 from glob import glob
 from utils.utils import *
 from trainer.base_cls_trainer import BASE_CLS
-from trainer.val_trainer import VAL
+from trainer.val_trainer import MID
 from numpy import linalg as LA
 from utils.helper_functions import get_knns, calc_F1
 from models.model import model_mid
-from loss.val_loss import VAL_LOSS
+from loss.mid_loss import MID_LOSS
 import faiss
 from utils.utils import load_word_vec
 
 
-class SGVAL:
+class BoMD:
     def __init__(
         self, args, train_loader, static_train_loader, train_loader_cls
     ) -> None:
@@ -29,8 +29,8 @@ class SGVAL:
         self.scaler = torch.cuda.amp.GradScaler(enabled=True)
         self.wordvec_array = load_word_vec(args)
 
-        self.val_runner = VAL(args, self.scaler, self.wordvec_array, train_loader)
-        self.a2s_runner = A2S(args, self.wordvec_array, static_train_loader)
+        self.val_runner = MID(args, self.scaler, self.wordvec_array, train_loader)
+        self.a2s_runner = NSD(args, self.wordvec_array, static_train_loader)
         self.cls_runner = BASE_CLS(args, self.scaler, train_loader_cls)
 
     @abstractmethod
@@ -40,13 +40,13 @@ class SGVAL:
         """
         Pre-training
         """
-        logger.bind(stage="GLOBAL").critical(f"VAL")
+        logger.bind(stage="GLOBAL").critical(f"MID")
         self.val_runner.run()
         torch.cuda.empty_cache()
         """
         KNN Graph
         """
-        logger.bind(stage="GLOBAL").critical(f"A2S")
+        logger.bind(stage="GLOBAL").critical(f"NSD")
         self.a2s_runner.run()
         """
         Classification
@@ -59,7 +59,7 @@ class SGVAL:
         return
 
 
-class A2S:
+class NSD:
     def __init__(self, args, wordvec_array, static_train_loader) -> None:
         self.args = args
         self.embed_len = args.embed_len
@@ -73,28 +73,28 @@ class A2S:
         self.train_size = self.org_gt.shape[0]
         self.relabel_methods = f"relabel_v{args.relabel_method}"
         self.relabel_func = getattr(self, self.relabel_methods)
-        logger.bind(stage="A2S").warning(f"Using method v{args.relabel_method}")
+        logger.bind(stage="NSD").warning(f"Using method v{args.relabel_method}")
 
-        if self.args.load_val_features:
-            fp = self.args.pd_ckpt
-            logger.bind(stage="A2S").warning("LOADING PD CKPT")
-            self.pred_idxs = np.load(f"./wandb/{fp}/files/pred_rank.npy")
-            self.va_matrix = np.load(f"./wandb/{fp}/files/va_matrix.npy")
+        if self.args.load_mid_features:
+            fp = self.args.mid_ckpt
+            logger.bind(stage="NSD").warning("LOADING PD CKPT")
+            self.pred_idxs = np.load(f"./ckpt/saved/{fp}/files/pred_rank.npy")
+            self.va_matrix = np.load(f"./ckpt/saved/{fp}/files/va_matrix.npy")
         if self.args.load_sample_graph:
-            logger.bind(stage="A2S").warning("LOADING SAMPLE GRAPH")
-            fp = self.args.pd_ckpt
-            self.sample_graph = np.load(f"./wandb/{fp}/files/sample_graph.npy")
+            logger.bind(stage="NSD").warning("LOADING SAMPLE GRAPH")
+            fp = self.args.mid_ckpt
+            self.sample_graph = np.load(f"./ckpt/saved/{fp}/files/sample_graph.npy")
 
     def run(
         self,
     ):
-        if not self.args.load_val_features:
-            logger.bind(stage="A2S").critical(f"FETCHING ATTRIBUTES")
+        if not self.args.load_mid_features:
+            logger.bind(stage="NSD").critical(f"FETCHING ATTRIBUTES")
             self.load_model()
             self.pred_idxs, self.va_matrix = self.get_attributes()
 
         if not self.args.load_sample_graph:
-            logger.bind(stage="A2S").critical(f"CONSTRUCTING SAMPLE GRAPH")
+            logger.bind(stage="NSD").critical(f"CONSTRUCTING SAMPLE GRAPH")
             self.sample_graph = self.graph_based_maker()
 
         self.knn_relabel()
@@ -103,12 +103,12 @@ class A2S:
     def load_model(
         self,
     ):
-        if len(self.args.pd_ckpt) != 0:
-            tmp = self.args.pd_ckpt
-            dir = f"./wandb/{tmp}/files"
+        if len(self.args.mid_ckpt) != 0:
+            tmp = self.args.mid_ckpt
+            dir = f"./ckpt/saved/{tmp}/files"
         else:
             dir = wandb.run.dir
-        fp = os.path.join(dir, "model_best_pd.pth")
+        fp = os.path.join(dir, "model_best_mid.pth")
         self.model.load_state_dict(torch.load(fp)["net"])
         self.model.to(self.device)
 
@@ -116,7 +116,7 @@ class A2S:
         self,
     ):
         # train_loader = construct_cx14(args, args.root_dir, mode="god", file_name="train")
-        mid_criteria = VAL_LOSS(
+        mid_criteria = MID_LOSS(
             wordvec_array=self.wordvec_array, weight=0.3, args=self.args
         ).to(self.device)
         total_loss = 0.0
@@ -148,7 +148,7 @@ class A2S:
         # np.save("./pred_pd.npy", torch.cat(preds_regular).numpy())
 
         train_loss = total_loss / (batch_idx + 1)
-        logger.bind(stage="A2S").info(f"Train Loss {train_loss}")
+        logger.bind(stage="NSD").info(f"Train Loss {train_loss}")
 
         va_matrix = torch.cat(preds_regular).numpy()
         pred_idxs, dists = get_knns(self.wordvec_array.cpu().detach(), va_matrix)
@@ -167,12 +167,12 @@ class A2S:
     def graph_based_maker(
         self,
     ):
-        num_pd = self.args.num_pd
+        num_fea = self.args.num_fea
 
         # pd_reshape = va_matrix
-        print(f"number of pd :{num_pd}")
+        print(f"number of pd :{num_fea}")
         pd_reshape = self.va_matrix.reshape(
-            self.va_matrix.shape[0], self.embed_len, num_pd
+            self.va_matrix.shape[0], self.embed_len, num_fea
         ).transpose(0, 2, 1)
         pd_reshape = pd_reshape.reshape(-1, self.embed_len)
         # pd_reshape
@@ -187,7 +187,7 @@ class A2S:
 
         D, I = gpu_index.search(pd_reshape, topk)
         # Attribute-level Graph
-        idx = I.reshape(self.train_size, num_pd, topk)
+        idx = I.reshape(self.train_size, num_fea, topk)
 
         # args = edict({"device": 0})
         # self.wordvec_array = load_word_vec(args)
@@ -197,12 +197,12 @@ class A2S:
         # Sample-level Graph
         for sample_idx in tqdm(range(self.train_size), ncols=100):
             lb_corr = [
-                np.unique(idx[sample_idx, i, :] // num_pd, return_index=True)
-                for i in range(num_pd)
+                np.unique(idx[sample_idx, i, :] // num_fea, return_index=True)
+                for i in range(num_fea)
             ]
             sort_index0 = None
             sort_index0 = [
-                lb_corr[i][0][np.argsort(lb_corr[i][1])] for i in range(num_pd)
+                lb_corr[i][0][np.argsort(lb_corr[i][1])] for i in range(num_fea)
             ]
             sort_index0 = [i.reshape(1, -1) for i in sort_index0]
             idx_score = []
@@ -227,8 +227,8 @@ class A2S:
     def knn_relabel(
         self,
     ):
-        self.sample_graph = self.sample_graph[:, : self.args.a2s_topk]
-        logger.bind(stage="A2S").critical(f"TOP-{self.args.a2s_topk} LABEL AGGREGATION")
+        self.sample_graph = self.sample_graph[:, : self.args.nsd_topk]
+        logger.bind(stage="NSD").critical(f"TOP-{self.args.nsd_topk} LABEL AGGREGATION")
 
         total_new_label = []
         # pred = np.zeros((self.num_classes,))
@@ -243,7 +243,7 @@ class A2S:
                     # pred += curret_pred
                     self.CLEAN_LIST.append(i)
         self.CLEAN_LIST = sorted(self.CLEAN_LIST)
-        logger.bind(stage="A2S").info(
+        logger.bind(stage="NSD").info(
             f"CLEAN SET CONTAIN {len(self.CLEAN_LIST)} SAMPLES"
         )
 
@@ -258,7 +258,7 @@ class A2S:
     def relabel_v3(self, sample_idx):
         row_new_label = None
         if sample_idx in self.CLEAN_LIST:
-            row_new_label = self.org_gt[sample_idx].copy() * self.args.a2s_topk
+            row_new_label = self.org_gt[sample_idx].copy() * self.args.nsd_topk
         else:
             topk_mat = np.stack(
                 [self.org_gt[sp_idx] for sp_idx in self.sample_graph[sample_idx]]
