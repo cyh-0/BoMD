@@ -12,8 +12,8 @@ Official code for "BoMD: Bag of Multi-label Descriptors for Noisy Chest X-ray Cl
 
 ### Weights
 * [Word embeddings](https://drive.google.com/drive/folders/1S3kL6KGtom_LTsqivdrlbdz_yXYKH8aE?usp=sharing) extracted by the BLUEBert model.
-* [Classifier weights (run-20220816_175557-6dn2k0id) trained on NIH](https://drive.google.com/drive/folders/1KzMOSRP_Q121f1ikwyIHn1FMSEDXUiO2?usp=sharing)
-* [MID \& NSD weights](https://drive.google.com/drive/folders/1NeafemhJg0HGf52Fzg9kLmhkyKMEhXeQ?usp=drive_link)
+* [Classifier weights trained on NIH](https://drive.google.com/drive/folders/1KzMOSRP_Q121f1ikwyIHn1FMSEDXUiO2?usp=sharing)
+* [MID \& NSD weights for run-20220816_175557-6dn2k0id](https://drive.google.com/drive/folders/1NeafemhJg0HGf52Fzg9kLmhkyKMEhXeQ?usp=drive_link)
 
 ### Datasets
 Download the raw data:
